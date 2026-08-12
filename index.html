@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>SafeHer — Women Safety App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Decorative gradient mesh background -->
+  <div class="bg-mesh" aria-hidden="true">
+    <span class="bg-blob bg-blob-1"></span>
+    <span class="bg-blob bg-blob-2"></span>
+    <span class="bg-blob bg-blob-3"></span>
+  </div>
+
+  <!-- ── FAKE CALL OVERLAY ── -->
+  <div id="fake-call-overlay" class="hidden">
+    <div class="call-screen">
+      <div class="call-top">
+        <p class="call-label">Incoming Call</p>
+        <div class="caller-avatar">👩‍💼</div>
+        <h2 class="caller-name" id="fake-caller-name">Mom</h2>
+        <p class="call-network">Mobile · India</p>
+        <div class="call-ripple"></div>
+      </div>
+      <div class="call-actions">
+        <button class="call-btn decline" onclick="endFakeCall()">
+          <span>📵</span><small>Decline</small>
+        </button>
+        <button class="call-btn answer" onclick="endFakeCall()">
+          <span>📞</span><small>Answer</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ── -->
+  <div class="app-wrapper">
+
+    <header class="app-header">
+      <div class="header-left">
+        <span class="app-logo">🛡️</span>
+        <span class="app-name">SafeHer</span>
+      </div>
+      <div class="header-right">
+        <span class="header-tag">Stay safe</span>
+        <span class="header-pulse-dot"></span>
+      </div>
+    </header>
+
+    <div id="status-toast" class="status-toast hidden"></div>
+
+    <!-- 5 tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('home')"     data-tab="home">🏠 Home</button>
+      <button class="tab-btn"        onclick="switchTab('contacts')" data-tab="contacts">👥 People</button>
+      <button class="tab-btn"        onclick="switchTab('tools')"    data-tab="tools">🔧 Tools</button>
+      <button class="tab-btn track-tab-btn" onclick="switchTab('safety')" data-tab="safety">📡 Track</button>
+      <button class="tab-btn translator-tab-btn" onclick="switchTab('translator')" data-tab="translator">🌐 Translate</button>
+    </nav>
+
+    <!-- ══ TAB 1: HOME ══ -->
+    <section id="tab-home" class="tab-section active">
+      <div class="sos-hero">
+        <p class="sos-tagline">Your safety, one tap away</p>
+        <button id="sos-btn" class="sos-button" onclick="triggerSOS()">
+          <span class="sos-pulse-ring"></span>
+          <span class="sos-inner">SOS</span>
+        </button>
+        <p class="sos-hint">Tap to trigger emergency</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📍</span>
+          <h3>Your Location</h3>
+        </div>
+        <div id="location-display">
+          <p class="muted-text">Tap SOS or "Get Location" to fetch your coordinates.</p>
+        </div>
+        <button class="btn-secondary" onclick="fetchLocation()">📡 Get Location</button>
+      </div>
+
+      <div class="card hidden" id="share-card">
+        <div class="card-header">
+          <span class="card-icon">💬</span>
+          <h3>Share Location</h3>
+        </div>
+
+        <!-- ── SECTION 1: FAST2SMS — AUTO BULK SMS ── -->
+        <div class="sms-section">
+          <div class="sms-header">
+            <span>📱 Auto SMS to All</span>
+            <span class="sms-badge">AUTOMATIC</span>
+          </div>
+          <p class="muted-text small">
+            Sends SMS to ALL contacts at once — no tapping needed.
+            Requires Fast2SMS account with ₹100+ wallet balance.
+          </p>
+          <div class="sms-key-row">
+            <input type="password" id="f2s-key-input" class="input-field"
+              placeholder="Paste Fast2SMS API key here"
+              style="font-size:12px; font-family:'IBM Plex Mono', monospace;" />
+            <button class="btn-save-key" onclick="saveF2SKey()">💾 Save</button>
+          </div>
+          <p id="f2s-status" class="muted-text small"></p>
+          <button class="btn-sms-send" id="sms-send-btn" onclick="sendSMSToAll()">
+            📱 Send SMS to All Contacts Now
+          </button>
+          <div id="sms-result" class="sms-result hidden"></div>
+        </div>
+
+        <div class="share-divider"><span>OR</span></div>
+
+        <!-- ── SECTION 2: WHATSAPP STEP-BY-STEP ── -->
+        <div class="wa-section">
+          <div class="wa-header">
+            <span>💬 WhatsApp</span>
+            <span class="wa-badge">TAP ONCE PER PERSON</span>
+          </div>
+
+          <!-- Queue card — one contact shown at a time -->
+          <div id="wa-queue-area" class="hidden">
+            <div class="wa-queue-card">
+              <p class="wa-queue-label">Sending to:</p>
+              <div id="wa-queue-contact-name" class="wa-queue-name"></div>
+              <div id="wa-queue-contact-num"  class="wa-queue-num"></div>
+              <button class="btn-wa-open" id="wa-open-btn" onclick="openNextWhatsApp()">
+                📲 Open WhatsApp for this person
+              </button>
+              <div id="wa-queue-progress" class="wa-queue-progress"></div>
+            </div>
+          </div>
+
+          <!-- Start queue button -->
+          <button class="btn-whatsapp-all" id="wa-start-btn" onclick="startWhatsAppQueue()">
+            📢 Share to ALL via WhatsApp
+          </button>
+
+          <!-- Individual contact buttons — filled by JS -->
+          <div id="whatsapp-contacts-area"></div>
+        </div>
+
+        <!-- hidden legacy -->
+        <a id="whatsapp-link" href="#" target="_blank" style="display:none;"></a>
+      </div>
+    </section>
+
+    <!-- ══ TAB 2: CONTACTS ══ -->
+    <section id="tab-contacts" class="tab-section hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">➕</span>
+          <h3>Add Emergency Contact</h3>
+        </div>
+        <input type="text" id="contact-name"  class="input-field" placeholder="Contact Name (e.g. Mom)" />
+        <input type="tel"  id="contact-phone" class="input-field" placeholder="Phone Number (e.g. 9876543210)" />
+        <button class="btn-primary" onclick="addContact()">Add Contact</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">👥</span>
+          <h3>Saved Contacts</h3>
+        </div>
+        <div id="contacts-list">
+          <p class="muted-text">No contacts saved yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ TAB 3: TOOLS ══ -->
+    <section id="tab-tools" class="tab-section hidden">
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">⏱️</span>
+          <h3>Safety Timer</h3>
+        </div>
+        <p class="muted-text">Set a timer. If you don't cancel it, SOS fires automatically.</p>
+        <div class="timer-controls">
+          <select id="timer-duration" class="input-field select-field">
+            <option value="60">1 Minute</option>
+            <option value="120" selected>2 Minutes</option>
+            <option value="300">5 Minutes</option>
+            <option value="600">10 Minutes</option>
+          </select>
+          <button class="btn-primary"       id="timer-start-btn"  onclick="startSafetyTimer()">▶ Start Timer</button>
+          <button class="btn-danger hidden" id="timer-cancel-btn" onclick="cancelSafetyTimer()">✕ Cancel</button>
+        </div>
+        <div id="timer-display" class="timer-display hidden">
+          <div class="timer-ring">
+            <span id="timer-countdown">02:00</span>
+          </div>
+          <p class="timer-warning">SOS will trigger when this reaches 0!</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📞</span>
+          <h3>Fake Incoming Call</h3>
+        </div>
+        <p class="muted-text">Simulate a call to escape uncomfortable situations.</p>
+        <input type="text" id="fake-caller-input" class="input-field" placeholder="Caller Name (e.g. Mom)" value="Mom" />
+        <div class="timer-controls">
+          <select id="fake-call-delay" class="input-field select-field">
+            <option value="0">Immediately</option>
+            <option value="5">After 5 sec</option>
+            <option value="10" selected>After 10 sec</option>
+            <option value="30">After 30 sec</option>
+          </select>
+          <button class="btn-secondary" onclick="startFakeCall()">📲 Simulate Call</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         TAB 4: SAFETY TRACK
+         ① Live Location Tracker  (ML stationary detection)
+         ② Audio Evidence Recorder (NEW — timed continuous recording)
+         ③ Photo + Audio Evidence Collector (manual / auto-on-SOS)
+         ④ Incident Report (log + printable report)
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-safety" class="tab-section hidden">
+
+      <!-- ── CARD 1: LIVE LOCATION TRACKER ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📡</span>
+          <h3>Live Location Tracker</h3>
+        </div>
+        <p class="muted-text">
+          Tracks your GPS location every 30 seconds automatically.
+          Share a live link with your family so they can watch you move in real time.
+        </p>
+
+        <div id="tracker-status-pill" class="tracker-pill off">
+          <span class="tracker-dot"></span>
+          <span id="tracker-status-text">Tracker is OFF</span>
+        </div>
+
+        <div id="tracker-location-box" class="tracker-location-box hidden">
+          <div id="tracker-coords" class="location-coords">Waiting for GPS...</div>
+          <div id="tracker-last-updated" class="tracker-updated">—</div>
+          <a id="tracker-maps-link" href="#" target="_blank" class="location-link">🗺️ Open in Google Maps ↗</a>
+        </div>
+
+        <div id="stationary-alert" class="stationary-alert hidden">
+          <strong>🤖 ML Alert:</strong>
+          <span id="stationary-alert-text">You appear stationary. Are you safe?</span>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-primary" style="flex:1; padding:10px;" onclick="dismissStationaryAlert()">✅ I'm Safe</button>
+            <button class="btn-danger"  style="flex:1; padding:10px;" onclick="triggerSOS()">🚨 SOS</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary"       id="tracker-start-btn" onclick="startLiveTracker()" style="flex:1;">▶ Start Tracking</button>
+          <button class="btn-danger hidden" id="tracker-stop-btn"  onclick="stopLiveTracker()"  style="flex:1;">⏹ Stop</button>
+        </div>
+
+        <button class="btn-whatsapp hidden" id="tracker-share-btn" onclick="shareTrackerLocation()" style="display:none;">
+          📲 Share Live Location via WhatsApp
+        </button>
+      </div>
+
+      <!-- ── CARD 2: 🎙️ AUDIO EVIDENCE RECORDER (NEW) ── -->
+      <div class="card audio-rec-card">
+        <div class="card-header">
+          <span class="card-icon">🎙️</span>
+          <h3>Audio Evidence Recorder</h3>
+          <span class="card-badge new-badge">NEW</span>
+        </div>
+        <p class="muted-text">
+          Records audio continuously for the time you choose. Useful as evidence — keep it running
+          while walking alone, in a cab, or in a tense situation. You can play it back and download afterwards.
+        </p>
+
+        <!-- Duration selector -->
+        <div class="audio-rec-controls">
+          <label class="audio-rec-label">Duration</label>
+          <div class="duration-chips" id="audio-duration-chips">
+            <button class="duration-chip" data-secs="30">30 sec</button>
+            <button class="duration-chip active" data-secs="60">1 min</button>
+            <button class="duration-chip" data-secs="300">5 min</button>
+            <button class="duration-chip" data-secs="600">10 min</button>
+          </div>
+        </div>
+
+        <!-- Live recording status -->
+        <div id="audio-rec-status" class="audio-rec-status hidden">
+          <div class="audio-rec-pulse">
+            <span class="rec-dot"></span>
+            <span class="rec-label">RECORDING</span>
+          </div>
+          <div id="audio-rec-timer" class="audio-rec-timer">00:00 / 01:00</div>
+          <!-- Live volume bars -->
+          <div class="vol-meter" id="audio-vol-meter">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Start / Stop buttons -->
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary" id="audio-rec-start-btn" onclick="startAudioRecording()" style="flex:1;">
+            🔴 Start Recording
+          </button>
+          <button class="btn-danger hidden" id="audio-rec-stop-btn" onclick="stopAudioRecording()" style="flex:1;">
+            ⏹ Stop Now
+          </button>
+        </div>
+
+        <!-- Saved recordings list -->
+        <div id="audio-rec-list" class="audio-rec-list">
+          <p class="muted-text small empty-list-msg">No recordings yet.</p>
+        </div>
+      </div>
+
+      <!-- ── CARD 3: PHOTO + AUDIO EVIDENCE COLLECTOR ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📸</span>
+          <h3>Photo &amp; Quick Audio Evidence</h3>
+        </div>
+        <p class="muted-text">
+          Captures a photo + 10 seconds of audio automatically when SOS is triggered.
+          Save and share as evidence with police.
+        </p>
+
+        <div class="voice-toggle-row">
+          <span id="evidence-auto-label">Auto-capture on SOS: OFF</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="evidence-auto-toggle" onchange="toggleAutoEvidence(this.checked)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <button class="btn-secondary" onclick="captureEvidenceManual()">📸 Capture Now (Manual)</button>
+
+        <video id="evidence-video" class="evidence-video hidden" autoplay muted playsinline></video>
+
+        <div id="evidence-results" class="hidden">
+          <p class="muted-text small" style="margin-bottom:6px;">📁 Captured Evidence:</p>
+
+          <div id="photo-result" class="evidence-item hidden">
+            <img id="evidence-photo" class="evidence-photo" src="" alt="Captured photo" />
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <a id="photo-download" class="evidence-action-btn" download="safeher-evidence.jpg">⬇ Save Photo</a>
+              <span id="photo-timestamp" class="evidence-timestamp"></span>
+            </div>
+          </div>
+
+          <div id="audio-result" class="evidence-item hidden">
+            <div class="audio-player-row">
+              <span>🎙️ Audio Recording (10 sec)</span>
+              <span id="audio-timestamp" class="evidence-timestamp"></span>
+            </div>
+            <audio id="evidence-audio" controls class="evidence-audio-player"></audio>
+            <a id="audio-download" class="evidence-action-btn" download="safeher-audio.webm">⬇ Save Audio</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 4: INCIDENT LOG + REPORT ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📋</span>
+          <h3>Incident Log &amp; Report</h3>
+        </div>
+        <p class="muted-text">
+          Every SOS trigger is automatically recorded here with date, time and location.
+          Generate a printable report for police complaint.
+        </p>
+
+        <div id="incident-list">
+          <p class="muted-text">No incidents recorded yet. SOS triggers are saved here automatically.</p>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn-primary"    onclick="generateReport()" style="flex:1;">🖨️ Generate Report</button>
+          <button class="btn-secondary"  onclick="clearIncidents()" style="flex:1;">🗑️ Clear Log</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         TAB 5: 🌐 LANGUAGE TRANSLATOR
+         Two modes:
+           (A) ONLINE  — browser Web Speech API + MyMemory translation
+           (B) OFFLINE — typing / Vosk (optional 40MB download)
+                        + offline dictionary + Chrome Translator API
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-translator" class="tab-section hidden">
+
+      <!-- INFO + MODE SWITCH + LANGUAGE PICKER -->
+      <div class="card translator-info-card">
+        <div class="card-header">
+          <span class="card-icon">🌐</span>
+          <h3>Language Translator</h3>
+        </div>
+        <p class="muted-text">
+          Hear or read a foreign language translated into yours. Pick the mode that fits your
+          situation — online for best accuracy, offline when the network is bad or blocked.
+        </p>
+
+        <!-- ── MODE SWITCH ── -->
+        <div class="mode-switch" role="tablist" aria-label="Translator mode">
+          <button class="mode-switch-btn active" id="mode-btn-online"
+                  role="tab" aria-selected="true"
+                  onclick="switchTranslatorMode('online')">
+            <span class="mode-icon">🌐</span>
+            <span class="mode-label">Online</span>
+            <span class="mode-sublabel">Best accuracy</span>
+          </button>
+          <button class="mode-switch-btn" id="mode-btn-offline"
+                  role="tab" aria-selected="false"
+                  onclick="switchTranslatorMode('offline')">
+            <span class="mode-icon">💾</span>
+            <span class="mode-label">Offline</span>
+            <span class="mode-sublabel">No internet needed</span>
+          </button>
+        </div>
+
+        <!-- ── LANGUAGE PICKERS (shared) ── -->
+        <div class="lang-picker-row">
+          <div class="lang-picker">
+            <label>They speak</label>
+            <select id="src-lang" class="input-field select-field"></select>
+          </div>
+          <div class="lang-arrow">→</div>
+          <div class="lang-picker">
+            <label>I read in</label>
+            <select id="tgt-lang" class="input-field select-field"></select>
+          </div>
+        </div>
+
+        <!-- Mode-specific info note -->
+        <p class="muted-text small translator-note" id="mode-info-online">
+          🔒 Uses your browser's speech engine + MyMemory translation. Needs internet.
+        </p>
+        <p class="muted-text small translator-note hidden" id="mode-info-offline">
+          💾 Works without any network. Type what you heard (or enable voice —
+          needs a one-time ~40MB download).
+        </p>
+      </div>
+
+      <!-- ═══════ ONLINE MODE PANEL ═══════ -->
+      <div class="card translator-mode-panel" id="panel-online">
+        <div class="card-header">
+          <span class="card-icon">🎧</span>
+          <h3>Listen &amp; Translate</h3>
+        </div>
+
+        <button id="translator-listen-btn" class="btn-listen" onclick="toggleTranslatorListening()">
+          <span class="listen-icon">🎤</span>
+          <span class="listen-label">Tap to Start Listening</span>
+        </button>
+
+        <div id="translator-state-pill" class="translator-state-pill idle">
+          <span class="state-dot"></span>
+          <span id="translator-state-text">Idle — tap mic to begin</span>
+        </div>
+
+        <!-- Diagnostic panel shown when network errors pile up -->
+        <div id="translator-diag-panel" class="translator-diag-panel hidden">
+          <div class="diag-title">🔍 Diagnosis</div>
+          <ul id="diag-list" class="diag-list"></ul>
+          <div class="diag-actions">
+            <button class="btn-secondary" onclick="retryOnlineSpeech()">🔁 Try Again</button>
+            <button class="btn-primary" onclick="switchTranslatorMode('offline')">💾 Switch to Offline</button>
+          </div>
+        </div>
+
+        <div class="translator-block">
+          <label class="translator-block-label">📝 What they said (original)</label>
+          <div id="translator-transcript" class="translator-transcript">
+            <span class="placeholder">Live transcription will appear here as they speak…</span>
+          </div>
+        </div>
+
+        <div class="translator-block">
+          <label class="translator-block-label">🔁 Translation</label>
+          <div id="translator-translation" class="translator-translation">
+            <span class="placeholder">Translation will appear here once we hear something.</span>
+          </div>
+        </div>
+
+        <div id="translator-sos-area" class="translator-sos-area hidden">
+          <div class="translator-sos-message">
+            ⚠️ Feel unsafe? Trigger SOS based on what you just heard.
+          </div>
+          <button class="btn-sos-translator" onclick="triggerSOS()">
+            🚨 Trigger SOS Now
+          </button>
+        </div>
+
+        <button class="btn-secondary" onclick="clearTranslator()" style="margin-top:4px;">
+          🧹 Clear Transcript
+        </button>
+      </div>
+
+      <!-- ═══════ OFFLINE MODE PANEL ═══════ -->
+      <div class="card translator-mode-panel hidden" id="panel-offline">
+        <div class="card-header">
+          <span class="card-icon">💾</span>
+          <h3>Offline Translate</h3>
+          <span class="card-badge new-badge">OFFLINE</span>
+        </div>
+
+        <!-- Engine status strip -->
+        <div class="offline-engine-row">
+          <div class="offline-engine-chip" id="engine-chip-dict">
+            <span class="engine-chip-dot"></span>
+            <span>Emergency phrasebook</span>
+          </div>
+          <div class="offline-engine-chip" id="engine-chip-ai">
+            <span class="engine-chip-dot"></span>
+            <span>Chrome AI translator</span>
+          </div>
+          <div class="offline-engine-chip" id="engine-chip-voice">
+            <span class="engine-chip-dot"></span>
+            <span>Voice input (Vosk)</span>
+          </div>
+        </div>
+
+        <!-- Text input (always works) -->
+        <div class="translator-block">
+          <label class="translator-block-label" for="offline-input-text">
+            ✍️ Type what you heard (or paste)
+          </label>
+          <textarea id="offline-input-text" class="input-field offline-textarea"
+                    placeholder="E.g. मुझे मदद चाहिए (type in their language)…"
+                    rows="3"></textarea>
+        </div>
+
+        <!-- Translate button + optional voice -->
+        <div class="offline-actions-row">
+          <button class="btn-primary" onclick="runOfflineTranslation()" style="flex:2;">
+            🔁 Translate
+          </button>
+          <button class="btn-secondary" id="offline-voice-btn"
+                  onclick="toggleOfflineVoice()" style="flex:1;">
+            🎤 Voice
+          </button>
+        </div>
+
+        <!-- Voice download panel (shown when user taps Voice first time) -->
+        <div class="offline-voice-setup hidden" id="offline-voice-setup">
+          <p class="muted-text small">
+            Offline voice uses <strong>Vosk</strong> — a free on-device speech engine.
+            First-time setup downloads a ~40&nbsp;MB model for the language selected above.
+            After that, it works entirely offline, forever.
+          </p>
+          <div class="voice-progress-wrap hidden" id="voice-progress-wrap">
+            <div class="voice-progress-label">
+              <span id="voice-progress-text">Preparing…</span>
+              <span id="voice-progress-pct">0%</span>
+            </div>
+            <div class="voice-progress-bar">
+              <div class="voice-progress-fill" id="voice-progress-fill"></div>
+            </div>
+          </div>
+          <div class="offline-voice-setup-actions">
+            <button class="btn-primary" id="voice-download-btn" onclick="downloadOfflineVoiceModel()">
+              ⬇ Download voice model (~40 MB)
+            </button>
+            <button class="btn-secondary" id="voice-pick-file-btn"
+                    onclick="document.getElementById('vosk-file-input').click()">
+              📂 Load from file
+            </button>
+            <button class="btn-secondary" onclick="hideVoiceSetup()">Later</button>
+            <input type="file" id="vosk-file-input" accept=".tar.gz,.gz,application/gzip"
+                   style="display:none"
+                   onchange="loadModelFromFile(this.files[0]); this.value='';">
+          </div>
+          <p class="voice-help muted-text small">
+            No model online for your language? Download the
+            <code>vosk-model-small-*.tar.gz</code> once from
+            <a href="https://alphacephei.com/vosk/models" target="_blank" rel="noopener">alphacephei.com/vosk/models</a>
+            and use <strong>📂 Load from file</strong>.
+          </p>
+
+        <!-- Voice state pill (shown while recording offline) -->
+        <div id="offline-voice-pill" class="translator-state-pill idle hidden">
+          <span class="state-dot"></span>
+          <span id="offline-voice-text">Idle</span>
+        </div>
+
+        <!-- Quick phrases from emergency phrasebook -->
+        <div class="quick-phrases-wrap">
+          <div class="quick-phrases-label">⚡ Quick safety phrases</div>
+          <div class="quick-phrases" id="quick-phrases-list"></div>
+        </div>
+
+        <!-- Transcript / translation (offline) -->
+        <div class="translator-block">
+          <label class="translator-block-label">📝 Original</label>
+          <div id="offline-transcript" class="translator-transcript">
+            <span class="placeholder">Text you type or speak appears here…</span>
+          </div>
+        </div>
+
+        <div class="translator-block">
+          <label class="translator-block-label">🔁 Translation <span id="offline-engine-used" class="engine-used"></span></label>
+          <div id="offline-translation" class="translator-translation">
+            <span class="placeholder">Translation will appear here.</span>
+          </div>
+        </div>
+
+        <!-- SOS area for offline mode -->
+        <div id="offline-sos-area" class="translator-sos-area hidden">
+          <div class="translator-sos-message">
+            ⚠️ Feel unsafe? Trigger SOS based on what you just heard.
+          </div>
+          <button class="btn-sos-translator" onclick="triggerSOS()">
+            🚨 Trigger SOS Now
+          </button>
+        </div>
+
+        <button class="btn-secondary" onclick="clearOfflineTranslator()" style="margin-top:4px;">
+          🧹 Clear
+        </button>
+      </div>
+
+    </section>
+
+  </div><!-- end .app-wrapper -->
+
+  <script src="script.js"></script>
+</body>
+</html>
