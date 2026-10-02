@@ -13,7 +13,7 @@ SafeHer is an installable progressive web app focused on quick access to safety 
 
 The latest deployed version is available at:
 
-**Deployment URL:** _coming soon_
+**Deployment URL:** <https://safeher-five.vercel.app>
 
 ## Run locally
 
