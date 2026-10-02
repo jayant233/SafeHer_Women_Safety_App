@@ -362,3 +362,13 @@ button{font-family:'Figtree',system-ui,sans-serif}
 @media (prefers-reduced-motion:reduce){
   .bg-blob,.sos-hero::before,.sos-pulse-ring,.sos-pulse-ring::after,.answer-ring{animation:none!important}
 }
+.evidence-photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.evidence-photo-item {
+  display: grid;
+  gap: 0.4rem;
+}

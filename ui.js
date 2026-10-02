@@ -27,7 +27,7 @@
     b.lastElementChild.textContent = loc ? 'Location ready' : 'Check my location';
   }
 
-  /* SOS with a 3-second cancel window (accidental taps no longer call/alert instantly) */
+  /* SOS with a five-second cancel window (accidental taps no longer call/alert instantly) */
   let timer = null, left = 0, practiceMode = false;
   const hideCountdown = () => { clearInterval(timer); timer = null; $('sos-countdown').classList.add('hidden'); };
   window.requestSOS = function (practice) {
@@ -35,7 +35,7 @@
     practiceMode = practice === true;
     if (!practiceMode && LS.get('safeher_sos_delay', '3') === '0') { try { getAudioContext(); } catch (e) {} triggerSOS(); openSOSActive(); return; }
     try { getAudioContext(); } catch (e) {}          // unlock audio while we still have the user's tap
-    left = practiceMode ? 3 : (parseInt(LS.get('safeher_sos_delay', '3')) || 3); $('sos-count').textContent = left;
+    left = 5; $('sos-count').textContent = left;
     $('sos-cd-title').textContent = practiceMode ? 'Practice run. SOS in' : 'Sending SOS in';
     $('sos-countdown').classList.remove('hidden'); $('sos-cancel-btn').focus(); buzz(60);
     timer = setInterval(() => {
@@ -239,13 +239,15 @@
   };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
 
-  /* First-run setup: contact -> permissions -> practice */
+  /* First-run setup: contact -> permissions -> camera -> practice */
   let ob = null, obStep = 0;
   const OB = [
     { t: 'Add someone you trust', p: 'They are the first person SafeHer calls when you press SOS.',
       body: '<input id="ob-name" class="input-field" placeholder="Name, like Mom" autocomplete="name" aria-label="Contact name"><input id="ob-phone" class="input-field" type="tel" inputmode="tel" placeholder="Phone number" autocomplete="tel" aria-label="Phone number"><p class="field-error" id="ob-error" role="alert"></p>' },
     { t: 'Allow what SOS needs', p: 'Your phone will ask for permission. SafeHer only uses these when you ask it to.',
       body: '<button class="btn-secondary" id="ob-loc" onclick="obAllow(\'loc\')">Allow location</button><p class="muted-text small">Lets your contacts see where you are.</p><button class="btn-secondary" id="ob-mic" onclick="obAllow(\'mic\')">Allow microphone</button><p class="muted-text small">For audio evidence and the translator.</p>' },
+    { t: 'Allow camera and alerts', p: 'Camera access lets SOS capture evidence. Notifications keep you informed about safety events.',
+      body: '<button class="btn-secondary" id="ob-camera" onclick="obAllow(\'camera\')">Allow camera</button><p class="muted-text small">SOS uses the front and back cameras for six evidence photos.</p><button class="btn-secondary" id="ob-notifications" onclick="obAllow(\'notifications\')">Allow notifications</button><p class="muted-text small">Shows important SOS and safety updates.</p>' },
     { t: 'Practice once', p: 'See what happens when you press SOS. Nothing is sent during practice.',
       body: '<button class="btn-primary" onclick="requestSOS(true)">Practice SOS</button><p class="muted-text small">You can always cancel during the countdown.</p>' }
   ];
@@ -281,11 +283,18 @@
     if (obStep < OB.length - 1) { obStep++; drawOB(); } else closeOB();
   };
   window.obAllow = function (kind) {
-    const b = $(kind === 'loc' ? 'ob-loc' : 'ob-mic'), name = kind === 'loc' ? 'Location' : 'Microphone';
+    const ids = { loc: 'ob-loc', mic: 'ob-mic', camera: 'ob-camera', notifications: 'ob-notifications' };
+    const names = { loc: 'Location', mic: 'Microphone', camera: 'Camera', notifications: 'Notifications' };
+    const b = $(ids[kind]), name = names[kind];
     const ok = () => { b.textContent = name + ' allowed'; b.classList.add('done'); };
     const no = () => { b.textContent = name + ' blocked. Allow it in your browser settings.'; };
     if (kind === 'loc') { navigator.geolocation ? navigator.geolocation.getCurrentPosition(ok, no) : no(); }
-    else { navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? navigator.mediaDevices.getUserMedia({ audio: true }).then(st => { st.getTracks().forEach(t => t.stop()); ok(); }).catch(no) : no(); }
+    else if (kind === 'mic' || kind === 'camera') {
+      const constraints = kind === 'mic' ? { audio: true } : { video: true };
+      navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? navigator.mediaDevices.getUserMedia(constraints).then(st => { st.getTracks().forEach(t => t.stop()); ok(); }).catch(no) : no();
+    } else if (kind === 'notifications') {
+      window.Notification ? Notification.requestPermission().then(permission => permission === 'granted' ? ok() : no()).catch(no) : no();
+    }
   };
 
   applyTheme();

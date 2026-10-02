@@ -834,43 +834,76 @@ async function captureEvidenceManual() {
 }
 
 async function captureEvidenceAuto() {
-  await Promise.allSettled([capturePhoto(), recordAudio(10)]);
+  await Promise.allSettled([capturePhotoSequence(), recordAudio(10)]);
 }
 
 async function capturePhoto() {
+  return capturePhotoSequence();
+}
+
+async function capturePhotoSequence() {
   const videoEl = document.getElementById('evidence-video');
   const photoEl = document.getElementById('evidence-photo');
   const photoDiv = document.getElementById('photo-result');
   const downloadEl = document.getElementById('photo-download');
   const tsEl = document.getElementById('photo-timestamp');
   const resultsDiv = document.getElementById('evidence-results');
+  const gallery = document.getElementById('evidence-photo-gallery');
+  const photos = [];
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: 640, height: 480 }
-    });
-    videoEl.srcObject = stream;
-    videoEl.classList.remove('hidden');
-    await new Promise(r => { videoEl.onloadedmetadata = r; });
-    videoEl.play();
-    await new Promise(r => setTimeout(r, 1500));
-    const canvas = document.createElement('canvas');
-    canvas.width  = videoEl.videoWidth  || 640;
-    canvas.height = videoEl.videoHeight || 480;
-    canvas.getContext('2d').drawImage(videoEl, 0, 0);
-    stream.getTracks().forEach(t => t.stop());
-    videoEl.classList.add('hidden');
-    videoEl.srcObject = null;
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    photoEl.src = dataUrl;
-    downloadEl.href = dataUrl;
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('camera-unavailable');
+    for (let i = 0; i < 6; i++) {
+      const facingMode = i % 2 === 0 ? 'user' : 'environment';
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode, width: 640, height: 480 }
+      });
+      videoEl.srcObject = stream;
+      videoEl.classList.remove('hidden');
+      await new Promise(resolve => {
+        videoEl.onloadedmetadata = resolve;
+        setTimeout(resolve, 1500);
+      });
+      await videoEl.play();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const canvas = document.createElement('canvas');
+      canvas.width = videoEl.videoWidth || 640;
+      canvas.height = videoEl.videoHeight || 480;
+      canvas.getContext('2d').drawImage(videoEl, 0, 0);
+      photos.push({ dataUrl: canvas.toDataURL('image/jpeg', 0.85), facingMode });
+      stream.getTracks().forEach(track => track.stop());
+      videoEl.srcObject = null;
+      videoEl.classList.add('hidden');
+    }
+    if (gallery) {
+      gallery.replaceChildren(...photos.map((photo, index) => {
+        const item = document.createElement('div');
+        item.className = 'evidence-photo-item';
+        const image = document.createElement('img');
+        image.className = 'evidence-photo';
+        image.src = photo.dataUrl;
+        image.alt = `${photo.facingMode === 'user' ? 'Front' : 'Back'} camera photo ${index + 1}`;
+        const link = document.createElement('a');
+        link.className = 'evidence-action-btn';
+        link.href = photo.dataUrl;
+        link.download = `safeher-evidence-${index + 1}-${photo.facingMode === 'user' ? 'front' : 'back'}.jpg`;
+        link.textContent = `Save photo ${index + 1}`;
+        item.append(image, link);
+        return item;
+      }));
+    }
+    photoEl.src = photos[0].dataUrl;
+    photoEl.classList.add('hidden');
+    downloadEl.href = photos[0].dataUrl;
     tsEl.textContent = '' + new Date().toLocaleString('en-IN');
     photoDiv.classList.remove('hidden');
     resultsDiv.classList.remove('hidden');
     playSuccessSound();
-    showStatus('Photo captured!', 'success', 4000);
+    showStatus('Six evidence photos captured: three front and three back camera.', 'success', 5000);
   } catch (err) {
+    if (videoEl.srcObject) videoEl.srcObject.getTracks().forEach(track => track.stop());
+    videoEl.srcObject = null;
     videoEl.classList.add('hidden');
-    console.warn('Photo capture failed:', err);
+    console.warn('Photo sequence failed:', err);
     showStatus('Camera access denied.', '', 5000);
   }
 }
