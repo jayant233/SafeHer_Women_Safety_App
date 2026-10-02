@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120E24" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="SafeHer" />
+  <script>/* apply the saved theme before first paint (no flash) */try{var p=localStorage.getItem('safeher_theme')||'dark';if(p==='auto')p=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',p)}catch(e){}</script>
+  <title>SafeHer — Women Safety App</title>
+  <meta name="description" content="One-tap SOS, live location sharing, fake calls and evidence recording for women's safety." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="polish.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..800&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400..700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Decorative gradient mesh background -->
+  <div class="bg-mesh" aria-hidden="true">
+    <span class="bg-blob bg-blob-1"></span>
+    <span class="bg-blob bg-blob-2"></span>
+    <span class="bg-blob bg-blob-3"></span>
+  </div>
+
+  <!-- ── FAKE CALL OVERLAY ── -->
+  <div id="fake-call-overlay" class="hidden">
+    <div class="call-screen">
+      <div class="call-top">
+        <p class="call-label">Incoming Call</p>
+        <div class="caller-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></div>
+        <h2 class="caller-name" id="fake-caller-name">Mom</h2>
+        <p class="call-network">Mobile · India</p>
+        <div class="call-ripple"></div>
+      </div>
+      <div class="call-actions">
+        <button class="call-btn decline" onclick="endFakeCall()">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span><small>Decline</small>
+        </button>
+        <button class="call-btn answer" onclick="answerFakeCall()">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span><small>Answer</small>
+        </button>
+      </div>
+        <div class="call-actions in-call-actions">
+          <button class="call-btn decline" onclick="endFakeCall()"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span><small>End call</small></button>
+        </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ── -->
+  <div class="app-wrapper">
+
+    <header class="app-header">
+      <div class="header-left">
+        <span class="app-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-2.9 7.9-7 9.5-4.1-1.6-7-5.1-7-9.5V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span>
+        <span class="app-name">SafeHer</span>
+      </div>
+      <div class="header-right">
+        <button class="contact-action-btn" onclick="openSettings()" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+      </div>
+    </header>
+
+    <div id="status-toast" class="status-toast hidden" role="status" aria-live="polite"></div>
+
+    <!-- 5 tabs -->
+    <nav class="tab-nav" aria-label="Main">
+      <button class="tab-btn active" onclick="switchTab('home')"     data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>Home</span></button>
+      <button class="tab-btn"        onclick="switchTab('contacts')" data-tab="contacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.4c1.9.8 3 2.6 3 5.6"/></svg><span>Contacts</span></button>
+      <button class="tab-btn"        onclick="switchTab('tools')"    data-tab="tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg><span>Tools</span></button>
+      <button class="tab-btn track-tab-btn" onclick="switchTab('safety')" data-tab="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Track</span></button>
+      <button class="tab-btn translator-tab-btn" onclick="switchTab('translator')" data-tab="translator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h9M8.5 3v2M6 5c.5 3 2.5 5.5 5.5 7M12 5c-.5 3-3 6-7 8"/><path d="M12 20l4.5-10L21 20M13.7 16.5h5.6"/></svg><span>Translate</span></button>
+    </nav>
+
+    <main id="main" tabindex="-1">
+
+    <!-- ══ TAB 1: HOME ══ -->
+    <section id="tab-home" class="tab-section active">
+      <div class="status-row">
+        <button class="chip" id="chip-contacts" onclick="switchTab('contacts')"><span class="dot"></span><span>Add an emergency contact</span></button>
+        <button class="chip" id="chip-loc" onclick="fetchLocation()"><span class="dot"></span><span>Check my location</span></button>
+      </div>
+
+      <div class="sos-hero">
+        <p class="sos-tagline">Help is one tap away</p>
+        <button id="sos-btn" class="sos-button" onclick="requestSOS()">
+          <span class="sos-pulse-ring"></span>
+          <span class="sos-inner">SOS</span>
+        </button>
+        <p class="sos-hint">Alerts your contacts with your live location</p>
+      </div>
+
+      <div class="quick-actions">
+        <button class="qa" onclick="startFakeCall()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg><span>Fake call</span></button>
+        <button class="qa" onclick="fetchLocation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>My location</span></button>
+        <button class="qa" onclick="switchTab('tools')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span>Safety timer</span></button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
+          <h3>Your Location</h3>
+        </div>
+        <div id="location-display">
+          <p class="muted-text">Tap SOS or "Get Location" to fetch your coordinates.</p>
+        </div>
+        <button class="btn-secondary" onclick="fetchLocation()">Get Location</button>
+      </div>
+
+      <div class="card hidden" id="share-card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4V5z"/></svg></span>
+          <h3>Share Location</h3>
+        </div>
+
+        <!-- ── SECTION 1: FAST2SMS — AUTO BULK SMS ── -->
+        <details class="adv-sms">
+          <summary>Automatic SMS (needs a Fast2SMS key)</summary>
+          <div class="sms-section">
+          <div class="sms-header">
+            <span>Auto SMS to All</span>
+            <span class="sms-badge">Automatic</span>
+          </div>
+          <p class="muted-text small">
+            Sends SMS to ALL contacts at once — no tapping needed.
+            Requires Fast2SMS account with ₹100+ wallet balance.
+          </p>
+          <p class="callout">Your API key is saved in this browser only, as plain text. Use a key with a small balance, and avoid this on a shared phone.</p>
+          <div class="sms-key-row">
+            <input type="password" id="f2s-key-input" class="input-field input-mono"
+              placeholder="Paste Fast2SMS API key here"
+              />
+            <button class="btn-save-key" onclick="saveF2SKey()">Save</button>
+          </div>
+          <p id="f2s-status" class="muted-text small"></p>
+          <button class="btn-sms-send" id="sms-send-btn" onclick="sendSMSToAll()">
+            Send SMS to All Contacts Now
+          </button>
+          <div id="sms-result" class="sms-result hidden"></div>
+        </div>
+
+        </details>
+
+        <div class="share-divider"><span>OR</span></div>
+
+        <!-- ── SECTION 2: WHATSAPP STEP-BY-STEP ── -->
+        <div class="wa-section">
+          <div class="wa-header">
+            <span>WhatsApp</span>
+            <span class="wa-badge">One tap per person</span>
+          </div>
+
+          <!-- Queue card — one contact shown at a time -->
+          <div id="wa-queue-area" class="hidden">
+            <div class="wa-queue-card">
+              <p class="wa-queue-label">Sending to:</p>
+              <div id="wa-queue-contact-name" class="wa-queue-name"></div>
+              <div id="wa-queue-contact-num"  class="wa-queue-num"></div>
+              <button class="btn-wa-open" id="wa-open-btn" onclick="openNextWhatsApp()">
+                Open WhatsApp for this person
+              </button>
+              <div id="wa-queue-progress" class="wa-queue-progress"></div>
+            </div>
+          </div>
+
+          <!-- Start queue button -->
+          <button class="btn-whatsapp-all" id="wa-start-btn" onclick="startWhatsAppQueue()">
+            Share to ALL via WhatsApp
+          </button>
+
+          <!-- Individual contact buttons — filled by JS -->
+          <div id="whatsapp-contacts-area"></div>
+        </div>
+
+        <!-- hidden legacy -->
+        <a class="hidden" id="whatsapp-link" href="#" target="_blank"></a>
+      </div>
+    </section>
+
+    <!-- ══ TAB 2: CONTACTS ══ -->
+    <section id="tab-contacts" class="tab-section hidden">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20c0-3.6 2.9-6 6.5-6 1.2 0 2.3.3 3.2.8M18 14v6M15 17h6"/></svg></span>
+          <h3>Add Emergency Contact</h3>
+        </div>
+        <input type="text" id="contact-name" autocomplete="name" aria-label="Contact name"  class="input-field" placeholder="Contact Name (e.g. Mom)" />
+        <input type="tel"  id="contact-phone" inputmode="tel" autocomplete="tel" aria-label="Phone number" class="input-field" placeholder="Phone Number (e.g. 9876543210)" />
+        <p class="field-error" id="contact-error" role="alert"></p>
+        <button class="btn-primary" onclick="addContact()">Add Contact</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.4c1.9.8 3 2.6 3 5.6"/></svg></span>
+          <h3>Saved Contacts</h3>
+        </div>
+        <div id="contacts-list">
+          <p class="muted-text">No contacts saved yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ TAB 3: TOOLS ══ -->
+    <section id="tab-tools" class="tab-section hidden">
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg></span>
+          <h3>Safety Timer</h3>
+        </div>
+        <p class="muted-text">Set a timer. If you don't cancel it, SOS fires automatically.</p>
+        <div class="timer-controls">
+          <select id="timer-duration" class="input-field select-field">
+            <option value="60">1 Minute</option>
+            <option value="120" selected>2 Minutes</option>
+            <option value="300">5 Minutes</option>
+            <option value="600">10 Minutes</option>
+          </select>
+          <button class="btn-primary"       id="timer-start-btn"  onclick="startSafetyTimer()">Start Timer</button>
+          <button class="btn-danger hidden" id="timer-cancel-btn" onclick="cancelSafetyTimer()">Cancel</button>
+        </div>
+        <div id="timer-display" class="timer-display hidden">
+          <div class="timer-ring">
+            <svg class="timer-svg" viewBox="0 0 120 120" aria-hidden="true"><circle class="tr-bg" cx="60" cy="60" r="54"/><circle id="timer-ring-arc" class="tr-arc" cx="60" cy="60" r="54"/></svg>
+            <span id="timer-countdown">02:00</span>
+          </div>
+          <p class="timer-warning">SOS will trigger when this reaches 0!</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span>
+          <h3>Fake Incoming Call</h3>
+        </div>
+        <p class="muted-text">Simulate a call to escape uncomfortable situations.</p>
+        <input type="text" id="fake-caller-input" class="input-field" placeholder="Caller Name (e.g. Mom)" value="Mom" />
+        <div class="timer-controls">
+          <select id="fake-call-delay" class="input-field select-field">
+            <option value="0">Immediately</option>
+            <option value="5">After 5 sec</option>
+            <option value="10" selected>After 10 sec</option>
+            <option value="30">After 30 sec</option>
+          </select>
+          <button class="btn-secondary" onclick="startFakeCall()">Simulate Call</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         TAB 4: SAFETY TRACK
+         ① Live Location Tracker  (ML stationary detection)
+         ② Audio Evidence Recorder (NEW — timed continuous recording)
+         ③ Photo + Audio Evidence Collector (manual / auto-on-SOS)
+         ④ Incident Report (log + printable report)
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-safety" class="tab-section hidden">
+
+      <!-- ── CARD 1: LIVE LOCATION TRACKER ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span>
+          <h3>Live Location Tracker</h3>
+        </div>
+        <p class="muted-text">
+          Tracks your GPS location every 30 seconds automatically.
+          Share a live link with your family so they can watch you move in real time.
+        </p>
+
+        <div id="tracker-status-pill" class="tracker-pill off">
+          <span class="tracker-dot"></span>
+          <span id="tracker-status-text">Tracker is OFF</span>
+        </div>
+
+        <div id="tracker-location-box" class="tracker-location-box hidden">
+          <div id="tracker-coords" class="location-coords">Waiting for GPS...</div>
+          <div id="tracker-last-updated" class="tracker-updated">—</div>
+          <a id="tracker-maps-link" href="#" target="_blank" class="location-link">Open in Google Maps ↗</a>
+        </div>
+
+        <div id="stationary-alert" class="stationary-alert hidden">
+          <strong>ML Alert:</strong>
+          <span id="stationary-alert-text">You appear stationary. Are you safe?</span>
+          <div class="row-actions mt">
+            <button class="btn-primary grow compact" onclick="dismissStationaryAlert()">I'm Safe</button>
+            <button class="btn-danger grow compact"  onclick="requestSOS()">SOS</button>
+          </div>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn-primary grow"       id="tracker-start-btn" onclick="startLiveTracker()">Start Tracking</button>
+          <button class="btn-danger hidden grow" id="tracker-stop-btn"  onclick="stopLiveTracker()" >Stop</button>
+        </div>
+
+        <button class="btn-whatsapp hidden" id="tracker-share-btn" onclick="shareTrackerLocation()">
+          Share Live Location via WhatsApp
+        </button>
+      </div>
+
+      <!-- ── CARD 2: 🎙️ AUDIO EVIDENCE RECORDER (NEW) ── -->
+      <div class="card audio-rec-card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
+          <h3>Audio Evidence Recorder</h3>
+          <span class="card-badge new-badge">New</span>
+        </div>
+        <p class="muted-text">
+          Records audio continuously for the time you choose. Useful as evidence — keep it running
+          while walking alone, in a cab, or in a tense situation. You can play it back and download afterwards.
+        </p>
+
+        <!-- Duration selector -->
+        <div class="audio-rec-controls">
+          <label class="audio-rec-label">Duration</label>
+          <div class="duration-chips" id="audio-duration-chips">
+            <button class="duration-chip" data-secs="30">30 sec</button>
+            <button class="duration-chip active" data-secs="60">1 min</button>
+            <button class="duration-chip" data-secs="300">5 min</button>
+            <button class="duration-chip" data-secs="600">10 min</button>
+          </div>
+        </div>
+
+        <!-- Live recording status -->
+        <div id="audio-rec-status" class="audio-rec-status hidden">
+          <div class="audio-rec-pulse">
+            <span class="rec-dot"></span>
+            <span class="rec-label">Recording</span>
+          </div>
+          <div id="audio-rec-timer" class="audio-rec-timer">00:00 / 01:00</div>
+          <!-- Live volume bars -->
+          <div class="vol-meter" id="audio-vol-meter" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+
+        <!-- Start / Stop buttons -->
+        <div class="rec-btns">
+          <button class="btn-primary" id="audio-rec-start-btn" onclick="startAudioRecording()">
+            Start Recording
+          </button>
+          <button class="btn-danger hidden" id="audio-rec-stop-btn" onclick="stopAudioRecording()">
+            Stop Now
+          </button>
+        </div>
+
+        <!-- Saved recordings list -->
+        <div id="audio-rec-list" class="audio-rec-list">
+          <p class="muted-text small empty-list-msg">No recordings yet.</p>
+        </div>
+      </div>
+
+      <!-- ── CARD 3: PHOTO + AUDIO EVIDENCE COLLECTOR ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2.5h7L17 8h3v11H4V8z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+          <h3>Photo &amp; Quick Audio Evidence</h3>
+        </div>
+        <p class="muted-text">
+          Captures a photo + 10 seconds of audio automatically when SOS is triggered.
+          Save and share as evidence with police.
+        </p>
+
+        <div class="voice-toggle-row">
+          <span id="evidence-auto-label">Auto-capture on SOS: OFF</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="evidence-auto-toggle" onchange="toggleAutoEvidence(this.checked)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <button class="btn-secondary" onclick="captureEvidenceManual()">Capture Now (Manual)</button>
+
+        <video id="evidence-video" class="evidence-video hidden" autoplay muted playsinline></video>
+
+        <div id="evidence-state"></div>
+
+        <div id="evidence-results" class="hidden">
+          <p class="muted-text small mb-6">Captured Evidence:</p>
+
+          <div id="photo-result" class="evidence-item hidden">
+            <img id="evidence-photo" class="evidence-photo" src="" alt="Captured photo" />
+            <div class="row-actions tight">
+              <a id="photo-download" class="evidence-action-btn" download="safeher-evidence.jpg">Save Photo</a>
+              <span id="photo-timestamp" class="evidence-timestamp"></span>
+            </div>
+          </div>
+
+          <div id="audio-result" class="evidence-item hidden">
+            <div class="audio-player-row">
+              <span>Audio Recording (10 sec)</span>
+              <span id="audio-timestamp" class="evidence-timestamp"></span>
+            </div>
+            <audio id="evidence-audio" controls class="evidence-audio-player"></audio>
+            <a id="audio-download" class="evidence-action-btn" download="safeher-audio.webm">Save Audio</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 4: INCIDENT LOG + REPORT ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg></span>
+          <h3>Incident Log &amp; Report</h3>
+        </div>
+        <p class="muted-text">
+          Every SOS trigger is automatically recorded here with date, time and location.
+          Generate a printable report for police complaint.
+        </p>
+
+        <div id="incident-list">
+          <p class="muted-text">No incidents recorded yet. SOS triggers are saved here automatically.</p>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn-primary grow"    onclick="generateReport()">Generate Report</button>
+          <button class="btn-secondary grow"  onclick="clearIncidents()">Clear Log</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         TAB 5: 🌐 LANGUAGE TRANSLATOR
+         Two modes:
+           (A) ONLINE  — browser Web Speech API + MyMemory translation
+           (B) OFFLINE — typing / Vosk (optional 40MB download)
+                        + offline dictionary + Chrome Translator API
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-translator" class="tab-section hidden">
+
+      <!-- INFO + MODE SWITCH + LANGUAGE PICKER -->
+      <div class="card translator-info-card">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></span>
+          <h3>Translate</h3>
+        </div>
+        <p class="muted-text">
+          Understand what someone is saying to you. Use Online for the best accuracy, or Offline when your signal is weak.
+        </p>
+
+        <!-- ── MODE SWITCH ── -->
+        <div class="mode-switch" role="tablist" aria-label="Translator mode">
+          <button class="mode-switch-btn active" id="mode-btn-online"
+                  role="tab" aria-selected="true"
+                  onclick="switchTranslatorMode('online')">
+            <span class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></span>
+            <span class="mode-label">Online</span>
+            <span class="mode-sublabel">Best accuracy</span>
+          </button>
+          <button class="mode-switch-btn" id="mode-btn-offline"
+                  role="tab" aria-selected="false"
+                  onclick="switchTranslatorMode('offline')">
+            <span class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></svg></span>
+            <span class="mode-label">Offline</span>
+            <span class="mode-sublabel">No internet needed</span>
+          </button>
+        </div>
+
+        <!-- ── LANGUAGE PICKERS (shared) ── -->
+        <div class="lang-picker-row">
+          <div class="lang-picker">
+            <label>They speak</label>
+            <select id="src-lang" class="input-field select-field"></select>
+          </div>
+          <button class="lang-swap" onclick="swapLanguages()" aria-label="Swap languages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3.5 7.5 7 11M3.5 7.5H18M17 13l3.5 3.5L17 20M20.5 16.5H6"/></svg></button>
+          <div class="lang-picker">
+            <label>I read in</label>
+            <select id="tgt-lang" class="input-field select-field"></select>
+          </div>
+        </div>
+
+        <!-- Mode-specific info note -->
+        <p class="muted-text small translator-note" id="mode-info-online">
+          Uses your browser's speech engine + MyMemory translation. Needs internet.
+        </p>
+        <p class="muted-text small translator-note hidden" id="mode-info-offline">
+          Works without any network. Type what you heard (or enable voice —
+          needs a one-time ~40MB download).
+        </p>
+      </div>
+
+      <!-- ═══════ ONLINE MODE PANEL ═══════ -->
+      <div class="card translator-mode-panel" id="panel-online">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4" height="6" rx="1.5"/><rect x="16.5" y="14" width="4" height="6" rx="1.5"/></svg></span>
+          <h3>Listen &amp; Translate</h3>
+        </div>
+
+        <button id="translator-listen-btn" class="btn-listen" onclick="toggleTranslatorListening()">
+          <span class="listen-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
+          <span class="listen-label">Tap to start listening</span>
+        </button>
+
+        <div id="translator-state-pill" class="translator-state-pill idle">
+          <span class="state-dot"></span>
+          <span id="translator-state-text">Idle — tap mic to begin</span>
+        </div>
+
+        <!-- Diagnostic panel shown when network errors pile up -->
+        <div id="translator-diag-panel" class="translator-diag-panel hidden">
+          <div class="diag-title">Diagnosis</div>
+          <ul id="diag-list" class="diag-list"></ul>
+          <div class="diag-actions">
+            <button class="btn-secondary" onclick="retryOnlineSpeech()">Try Again</button>
+            <button class="btn-primary" onclick="switchTranslatorMode('offline')">Switch to Offline</button>
+          </div>
+        </div>
+
+        <div class="translator-block">
+          <label class="translator-block-label">They said</label>
+          <div id="translator-transcript" class="translator-transcript">
+            <span class="placeholder">Live transcription will appear here as they speak…</span>
+          </div>
+        </div>
+
+        <div class="translator-block">
+          <label class="translator-block-label">You read</label>
+          <div id="translator-translation" class="translator-translation">
+            <span class="placeholder">Translation will appear here once we hear something.</span>
+          </div>
+        </div>
+
+        <div id="translator-sos-area" class="translator-sos-area hidden">
+          <div class="translator-sos-message">
+            Feel unsafe? Trigger SOS based on what you just heard.
+          </div>
+          <button class="btn-sos-translator" onclick="requestSOS()">
+            Trigger SOS Now
+          </button>
+        </div>
+
+        <button class="btn-secondary mt-4" onclick="clearTranslator()">
+          Clear Transcript
+        </button>
+      </div>
+
+      <!-- ═══════ OFFLINE MODE PANEL ═══════ -->
+      <div class="card translator-mode-panel hidden" id="panel-offline">
+        <div class="card-header">
+          <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></svg></span>
+          <h3>Offline Translate</h3>
+          <span class="card-badge new-badge">Offline</span>
+        </div>
+
+        <!-- Engine status strip -->
+        <div class="offline-engine-row">
+          <div class="offline-engine-chip" id="engine-chip-dict">
+            <span class="engine-chip-dot"></span>
+            <span>Emergency phrasebook</span>
+          </div>
+          <div class="offline-engine-chip" id="engine-chip-ai">
+            <span class="engine-chip-dot"></span>
+            <span>Chrome AI translator</span>
+          </div>
+          <div class="offline-engine-chip" id="engine-chip-voice">
+            <span class="engine-chip-dot"></span>
+            <span>Voice input (Vosk)</span>
+          </div>
+        </div>
+
+        <!-- Text input (always works) -->
+        <div class="translator-block">
+          <label class="translator-block-label" for="offline-input-text">
+            Type what you heard
+          </label>
+          <textarea id="offline-input-text" class="input-field offline-textarea"
+                    placeholder="E.g. मुझे मदद चाहिए (type in their language)…"
+                    rows="3"></textarea>
+        </div>
+
+        <!-- Translate button + optional voice -->
+        <div class="offline-actions-row">
+          <button class="btn-primary grow-2" onclick="runOfflineTranslation()">
+            Translate
+          </button>
+          <button class="btn-secondary grow" id="offline-voice-btn"
+                  onclick="toggleOfflineVoice()">
+            Voice
+          </button>
+        </div>
+
+        <!-- Voice download panel (shown when user taps Voice first time) -->
+        <div class="offline-voice-setup hidden" id="offline-voice-setup">
+          <p class="muted-text small">
+            Offline voice uses <strong>Vosk</strong> — a free on-device speech engine.
+            First-time setup downloads a ~40&nbsp;MB model for the language selected above.
+            After that, it works entirely offline, forever.
+          </p>
+          <div class="voice-progress-wrap hidden" id="voice-progress-wrap">
+            <div class="voice-progress-label">
+              <span id="voice-progress-text">Preparing…</span>
+              <span id="voice-progress-pct">0%</span>
+            </div>
+            <div class="voice-progress-bar">
+              <div class="voice-progress-fill" id="voice-progress-fill"></div>
+            </div>
+          </div>
+          <div class="offline-voice-setup-actions">
+            <button class="btn-primary" id="voice-download-btn" onclick="downloadOfflineVoiceModel()">
+              Download voice model (~40 MB)
+            </button>
+            <button class="btn-secondary" id="voice-pick-file-btn"
+                    onclick="document.getElementById('vosk-file-input').click()">
+              Load from file
+            </button>
+            <button class="btn-secondary" onclick="hideVoiceSetup()">Later</button>
+            <input class="hidden" type="file" id="vosk-file-input" accept=".tar.gz,.gz,application/gzip"
+                  
+                   onchange="loadModelFromFile(this.files[0]); this.value='';">
+          </div>
+          <p class="voice-help muted-text small">
+            No model online for your language? Download the
+            <code>vosk-model-small-*.tar.gz</code> once from
+            <a href="https://alphacephei.com/vosk/models" target="_blank" rel="noopener">alphacephei.com/vosk/models</a>
+            and use <strong>Load from file</strong>.
+          </p>
+
+        </div>
+
+        <!-- Voice state pill (shown while recording offline) -->
+        <div id="offline-voice-pill" class="translator-state-pill idle hidden">
+          <span class="state-dot"></span>
+          <span id="offline-voice-text">Idle</span>
+        </div>
+
+        <!-- Quick phrases from emergency phrasebook -->
+        <div class="quick-phrases-wrap">
+          <div class="quick-phrases-label">Quick safety phrases</div>
+          <div class="quick-phrases" id="quick-phrases-list"></div>
+        </div>
+
+        <!-- Transcript / translation (offline) -->
+        <div class="translator-block">
+          <label class="translator-block-label">They said</label>
+          <div id="offline-transcript" class="translator-transcript">
+            <span class="placeholder">Text you type or speak appears here…</span>
+          </div>
+        </div>
+
+        <div class="translator-block">
+          <label class="translator-block-label">You read <span id="offline-engine-used" class="engine-used"></span></label>
+          <div id="offline-translation" class="translator-translation">
+            <span class="placeholder">Translation will appear here.</span>
+          </div>
+        </div>
+
+        <!-- SOS area for offline mode -->
+        <div id="offline-sos-area" class="translator-sos-area hidden">
+          <div class="translator-sos-message">
+            Feel unsafe? Trigger SOS based on what you just heard.
+          </div>
+          <button class="btn-sos-translator" onclick="requestSOS()">
+            Trigger SOS Now
+          </button>
+        </div>
+
+        <button class="btn-secondary mt-4" onclick="clearOfflineTranslator()">
+          Clear
+        </button>
+      </div>
+
+    </section>
+
+    </main>
+  </div><!-- end .app-wrapper -->
+
+  <!-- SOS cancel window -->
+  <div id="sos-countdown" class="sos-countdown hidden" role="alertdialog" aria-modal="true" aria-labelledby="sos-cd-title">
+    <p id="sos-cd-title" class="sos-cd-title">Sending SOS in</p>
+    <div class="sos-cd-ring"><span id="sos-count" aria-live="assertive">3</span></div>
+    <p class="sos-cd-sub">Your contacts will get your live location.</p>
+    <button id="sos-cancel-btn" class="sos-cd-cancel" onclick="cancelSOS()">Cancel, I'm safe</button>
+  </div>
+  <!-- SOS active screen -->
+  <div id="sos-active" class="sos-active hidden" role="alertdialog" aria-modal="true" aria-labelledby="sos-act-title">
+    <div class="sos-act-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17h12l-1.5-2V10a4.5 4.5 0 0 0-9 0v5L6 17zM10 20a2 2 0 0 0 4 0"/></svg></div>
+    <h2 id="sos-act-title" class="sos-act-title">SOS is active</h2>
+    <ul class="sos-act-list">
+      <li class="done">Alarm sounded</li>
+      <li id="sos-act-loc">Finding your location…</li>
+      <li id="sos-act-call">Calling your primary contact</li>
+    </ul>
+    <a class="sos-act-call112" href="tel:112">Call 112</a>
+    <button class="sos-act-share" onclick="shareFromSOS()">Share my location</button>
+    <button class="sos-act-safe" onclick="closeSOSActive()">I'm safe, end SOS</button>
+  </div>
+  <div id="undo-bar" class="undo-bar hidden" role="status"><span id="undo-text">Contact removed</span><button onclick="undoDelete()">Undo</button></div>
+
+  <script src="script.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

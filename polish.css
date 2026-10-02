@@ -1,0 +1,364 @@
+/* SafeHer polish layer: loads after style.css. Visual only; no ids/classes renamed.
+   Rules kept: coral = emergency, lilac = interactive, teal = safe. All colours follow theme tokens. */
+
+::selection{background:rgba(165,150,255,.4)}
+body{background:
+  radial-gradient(75% 36% at 50% -6%,rgba(165,150,255,.28),transparent 70%),
+  radial-gradient(55% 26% at 105% 40%,rgba(45,212,167,.08),transparent 70%),
+  radial-gradient(55% 26% at -5% 66%,rgba(255,77,94,.08),transparent 70%),
+  var(--bg-deep);background-attachment:fixed}
+
+/* Header */
+.app-header{-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--border-soft)}
+.app-logo{box-shadow:0 6px 18px -4px rgba(143,125,250,.75),inset 0 1px 0 rgba(255,255,255,.5)}
+.app-name{font-weight:800;letter-spacing:-.02em}
+
+/* Page change: a short confirmation that the tab switched */
+.tab-section.active{animation:tab-in .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes tab-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Floating glass dock */
+.tab-nav{bottom:calc(10px + env(safe-area-inset-bottom));width:min(calc(100% - 24px),416px);padding:6px;
+  border:1px solid var(--border-soft);border-radius:28px;
+  background:color-mix(in srgb,var(--surface) 78%,transparent);
+  box-shadow:0 18px 40px -14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.07)}
+.tab-btn{border-radius:22px;min-height:54px;transition:background .25s,color .25s,transform .15s}
+.tab-btn:active{transform:scale(.94)}
+.tab-btn.active{background:linear-gradient(160deg,rgba(165,150,255,.36),rgba(165,150,255,.12));
+  box-shadow:inset 0 0 0 1px rgba(165,150,255,.34),0 8px 20px -10px rgba(165,150,255,.8)}
+.tab-btn.active svg{filter:drop-shadow(0 0 6px rgba(165,150,255,.7))}
+[data-theme="light"] .tab-nav{box-shadow:0 16px 36px -14px rgba(40,25,120,.35)}
+
+/* SOS: the one loud, memorable element. It breathes slowly; calm until needed. */
+.sos-hero{position:relative;isolation:isolate;animation:hero-in .7s cubic-bezier(.2,.9,.25,1) both}
+@keyframes hero-in{from{opacity:0;transform:translateY(12px) scale(.95)}to{opacity:1;transform:none}}
+.sos-hero::before{content:'';position:absolute;z-index:-1;left:50%;top:50%;width:360px;height:360px;
+  transform:translate(-50%,-48%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,77,94,.26),rgba(255,77,94,.08) 45%,transparent 70%);
+  animation:aura 4.2s ease-in-out infinite}
+@keyframes aura{50%{opacity:.55;transform:translate(-50%,-48%) scale(1.08)}}
+.sos-tagline{font-size:26px;font-weight:700;text-wrap:balance}
+.sos-button,.sos-button:hover{position:relative;overflow:visible;
+  background:radial-gradient(circle at 34% 22%,#FFB3BA 0,#FF6B7A 28%,var(--red) 58%,#B8243A 100%);
+  box-shadow:0 0 0 10px rgba(255,77,94,.11),0 0 0 22px rgba(255,77,94,.05),
+    0 26px 60px -6px rgba(255,77,94,.55),inset 0 4px 12px rgba(255,255,255,.38),inset 0 -14px 28px rgba(120,10,30,.4)}
+.sos-button::before{content:'';position:absolute;inset:7px 18px auto;height:46%;border-radius:50% 50% 60% 60%/70% 70% 40% 40%;
+  background:linear-gradient(180deg,rgba(255,255,255,.34),transparent);pointer-events:none}
+.sos-inner{position:relative;z-index:1;text-shadow:0 3px 14px rgba(120,10,30,.5)}
+.sos-pulse-ring,.sos-pulse-ring::after{position:absolute;inset:-16px;border-radius:50%;pointer-events:none;
+  border:2px solid rgba(255,77,94,.38);background:none;animation:ring 3.6s ease-out infinite}
+.sos-pulse-ring::after{content:'';inset:-16px;animation-delay:1.8s}
+@keyframes ring{0%{transform:scale(.96);opacity:.9}100%{transform:scale(1.32);opacity:0}}
+.sos-button:active{transform:scale(.95)}
+.sos-hint{max-width:30ch;margin-inline:auto;text-wrap:balance}
+
+/* Status chips */
+.chip{background:color-mix(in srgb,var(--surface) 80%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.chip.ok{border-color:rgba(45,212,167,.4);background:rgba(45,212,167,.09);color:var(--text)}
+.chip.ok .dot{box-shadow:0 0 0 4px rgba(45,212,167,.2)}
+.chip.warn{border-color:rgba(245,177,76,.4);background:rgba(245,177,76,.08);color:var(--text)}
+.chip.warn .dot{box-shadow:0 0 0 4px rgba(245,177,76,.2)}
+
+/* Quick actions: each icon gets its own soft tile */
+.qa{gap:10px;padding:16px 6px 14px;transition:transform .15s,border-color .2s,background .2s}
+.qa:hover{border-color:rgba(165,150,255,.4)}
+.qa svg{box-sizing:content-box;width:22px;height:22px;padding:11px;border-radius:16px;background:rgba(165,150,255,.15)}
+.qa:nth-child(2) svg{color:var(--green);background:rgba(45,212,167,.14)}
+.qa:nth-child(3) svg{color:#F5B14C;background:rgba(245,177,76,.14)}
+[data-theme="light"] .qa:nth-child(3) svg{color:#8A5300}
+
+/* Cards: a lit edge instead of a flat outline */
+.card{border:1px solid transparent;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,
+    linear-gradient(165deg,rgba(165,150,255,.4),rgba(255,255,255,.04) 42%,rgba(165,150,255,.1)) border-box;
+  box-shadow:0 14px 32px -20px rgba(0,0,0,.7)}
+[data-theme="light"] .card{
+  background:linear-gradient(#fff,#fff) padding-box,
+    linear-gradient(165deg,rgba(91,69,224,.32),rgba(23,16,47,.06) 45%,rgba(91,69,224,.12)) border-box;
+  box-shadow:0 12px 28px -18px rgba(60,40,160,.4)}
+.card-icon{background:linear-gradient(145deg,rgba(165,150,255,.3),rgba(165,150,255,.08));box-shadow:inset 0 0 0 1px rgba(165,150,255,.22)}
+
+/* Buttons and inputs */
+.btn-primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent),#fff 24%),var(--accent));
+  box-shadow:0 12px 24px -12px var(--accent),inset 0 1px 0 rgba(255,255,255,.4)}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-secondary{background:color-mix(in srgb,var(--surface-2) 70%,transparent)}
+.btn-secondary:hover{border-color:var(--accent)}
+.input-field{transition:border-color .2s,box-shadow .2s}
+
+/* Contacts */
+.contact-item{transition:transform .15s,border-color .2s}
+.contact-item:active{transform:scale(.99)}
+.contact-item.primary-contact{background:linear-gradient(120deg,rgba(45,212,167,.13),var(--surface-2) 62%)}
+.contact-avatar{background:linear-gradient(145deg,hsl(var(--h,260) 75% 64%),hsl(calc(var(--h,260) + 28) 62% 36%));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 14px -6px hsl(var(--h,260) 70% 50%)}
+
+/* Timer, toast, tracking */
+.tr-arc{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 70%,transparent))}
+.status-toast{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:18px;box-shadow:0 18px 44px -14px rgba(0,0,0,.6)}
+.tracker-pill.on{box-shadow:inset 0 0 0 1px rgba(45,212,167,.35)}
+
+/* Emergency screens: deeper glow on the countdown ring */
+.sos-cd-ring{background:radial-gradient(circle,rgba(255,77,94,.16),transparent 70%)}
+.sos-act-badge{box-shadow:0 0 40px rgba(255,77,94,.55)}
+
+@media (max-width:360px){.sos-button,.sos-button:hover{width:190px;height:190px}.sos-inner{font-size:56px}}
+
+/* ── Part 2: fake call, Translate, first-run, settings, SOS screens ── */
+html{scroll-behavior:smooth}
+*{-webkit-tap-highlight-color:transparent}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.muted-text,.ob-sub,.ob-body{text-wrap:pretty}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Fake call: should look like a real phone call, and calm down once answered */
+#fake-call-overlay{background:radial-gradient(120% 70% at 50% 0%,#3C2F8C 0,#1B1442 46%,#0B0819 100%)}
+#fake-call-overlay.in-call{background:radial-gradient(120% 70% at 50% 0%,#17584D 0,#14234A 46%,#090E1D 100%)}
+.call-screen{height:100%;height:100dvh;padding:calc(72px + env(safe-area-inset-top)) 24px calc(64px + env(safe-area-inset-bottom))}
+.call-label{display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.1);
+  font-size:13px;font-weight:600;letter-spacing:.01em;text-transform:none;color:rgba(255,255,255,.85)}
+.caller-avatar{display:grid;place-items:center;width:128px;height:128px;margin:18px auto 14px;border-radius:50%;
+  background:linear-gradient(145deg,#9C8CFF,#4B3BB8);
+  box-shadow:0 0 0 14px rgba(165,150,255,.12),0 0 0 30px rgba(165,150,255,.06),0 26px 50px -10px rgba(0,0,0,.65),inset 0 2px 0 rgba(255,255,255,.35)}
+.caller-name{font-size:38px;font-weight:700;letter-spacing:-.015em;text-transform:none;color:#fff}
+.call-network{color:rgba(255,255,255,.6)}
+.call-btn{width:72px;height:72px;box-shadow:0 16px 32px -12px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.3)}
+.call-btn.decline{background:linear-gradient(150deg,#FF7080,var(--red) 55%,#C42A3D)}
+.call-btn.answer{background:linear-gradient(150deg,#58E8C2,var(--green) 55%,#139A78);color:#06281F;animation:answer-ring 1.6s ease-out infinite}
+.call-btn small{color:rgba(255,255,255,.8)}
+@keyframes answer-ring{from{box-shadow:0 0 0 0 rgba(45,212,167,.55)}to{box-shadow:0 0 0 24px rgba(45,212,167,0)}}
+
+/* Translate */
+.mode-switch{box-shadow:inset 0 0 0 1px var(--border-soft)}
+.mode-switch-btn{transition:background .25s,color .25s}
+.mode-switch-btn.active{background:linear-gradient(160deg,rgba(165,150,255,.34),rgba(165,150,255,.12));box-shadow:inset 0 0 0 1px rgba(165,150,255,.4)}
+.btn-listen{min-height:108px;background:linear-gradient(160deg,color-mix(in srgb,var(--accent),#fff 24%),var(--accent) 58%,color-mix(in srgb,var(--accent),#000 20%));
+  box-shadow:0 20px 38px -16px var(--accent),inset 0 1px 0 rgba(255,255,255,.45)}
+.btn-listen .listen-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:rgba(23,16,47,.14)}
+.btn-listen.listening{background:linear-gradient(160deg,#6FF0CB,var(--green) 60%,#139A78);box-shadow:0 20px 38px -16px var(--green),inset 0 1px 0 rgba(255,255,255,.45)}
+.translator-transcript{box-shadow:0 10px 22px -16px rgba(0,0,0,.7)}
+.translator-translation{background:linear-gradient(150deg,rgba(165,150,255,.28),rgba(165,150,255,.1));box-shadow:0 12px 26px -14px rgba(143,125,250,.75)}
+.lang-swap{transition:transform .35s cubic-bezier(.3,1.4,.5,1),background .2s}
+.lang-swap:active{transform:rotate(180deg);background:rgba(165,150,255,.14)}
+.quick-phrase-chip{transition:transform .12s,border-color .2s,background .2s}
+.quick-phrase-chip:hover{border-color:var(--accent);background:rgba(165,150,255,.14)}
+.quick-phrase-chip:active{transform:scale(.95)}
+
+/* First-run */
+.ob-card{background:radial-gradient(85% 34% at 50% 0%,rgba(165,150,255,.24),transparent 70%);animation:hero-in .5s cubic-bezier(.2,.9,.25,1) both}
+.ob-dots i{height:5px;transition:background .3s}
+.ob-dots i.on{background:linear-gradient(90deg,#C3B9FF,var(--accent));box-shadow:0 0 10px rgba(165,150,255,.55)}
+.ob-title{font-size:32px;text-wrap:balance}
+
+/* Settings sheet */
+.sheet-backdrop{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.sheet{border:1px solid var(--border-soft);border-bottom:0;border-radius:28px 28px 0 0;box-shadow:0 -24px 60px -20px rgba(0,0,0,.7)}
+.sheet::before{content:'';flex:none;width:40px;height:4px;margin:-8px auto 2px;border-radius:2px;background:var(--border)}
+
+/* SOS countdown and active screens */
+.sos-cd-ring span{text-shadow:0 0 32px rgba(255,77,94,.75)}
+.sos-cd-ring{background:radial-gradient(circle,rgba(255,77,94,.18),transparent 70%)}
+.sos-act-title{text-wrap:balance}
+.sos-act-list li{border:1px solid var(--border-soft);transition:background .3s,color .3s,border-color .3s}
+.sos-act-list li.done{color:var(--text);background:rgba(45,212,167,.12);border-color:rgba(45,212,167,.32)}
+.sos-act-list li.done::before{background:var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.4l2.6 2.6L12 5.6' fill='none' stroke='%2306281F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
+.sos-act-call112{box-shadow:0 16px 32px -10px rgba(255,77,94,.75)}
+.sos-act-share{box-shadow:0 16px 32px -12px var(--accent)}
+
+/* Evidence, incidents, notes, empty states */
+.evidence-item{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--radius-sm)}
+.timeline::before{background:linear-gradient(var(--red),var(--border) 40%,transparent)}
+.tl-item{border:1px solid var(--border-soft)}
+.tl-item::before{box-shadow:0 0 0 4px var(--surface),0 0 14px rgba(255,77,94,.7)}
+.callout{padding:10px 12px;border-left:3px solid #F5B14C;border-radius:var(--radius-xs);background:rgba(245,177,76,.09)}
+.empty svg{filter:drop-shadow(0 0 14px rgba(165,150,255,.5))}
+
+/* ── Signature refresh: calm, premium, and unmistakably actionable ── */
+:root{
+  --bg-deep:#080712;
+  --surface:#151326;
+  --surface-2:#1d1933;
+  --surface-3:#282245;
+  --border:#342c55;
+  --border-soft:rgba(211,202,255,.12);
+  --text:#f8f6ff;
+  --text-soft:#cbc6df;
+  --text-muted:#8e89a8;
+  --accent:#a996ff;
+  --red:#ff536d;
+  --green:#36d9ad;
+  --radius:20px;
+  --radius-sm:14px;
+}
+
+body{
+  background:
+    radial-gradient(90% 42% at 50% -8%,rgba(169,150,255,.22),transparent 68%),
+    radial-gradient(65% 40% at 100% 70%,rgba(54,217,173,.07),transparent 70%),
+    #080712;
+}
+.bg-mesh{
+  background:
+    radial-gradient(700px 440px at 8% 4%,rgba(255,83,109,.13),transparent 70%),
+    radial-gradient(800px 560px at 92% 88%,rgba(169,150,255,.12),transparent 70%),
+    #080712;
+}
+.app-wrapper{
+  background:linear-gradient(180deg,rgba(19,16,38,.84),rgba(8,7,18,.72));
+}
+.app-header{
+  padding:20px 22px 16px;
+  background:rgba(12,10,27,.78);
+  box-shadow:0 12px 30px -24px rgba(0,0,0,.9);
+}
+.app-logo{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  border-radius:13px;
+  color:#fff;
+  background:linear-gradient(145deg,#b9adff,#6d5be0);
+}
+.app-name{
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
+  font-size:24px;
+  letter-spacing:-.045em;
+}
+.contact-action-btn{
+  width:42px;
+  height:42px;
+  border:1px solid var(--border-soft);
+  border-radius:14px;
+  background:rgba(255,255,255,.06);
+  color:var(--text-soft);
+  transition:transform .18s,background .18s,color .18s;
+}
+.contact-action-btn:hover{background:rgba(169,150,255,.16);color:var(--text);transform:translateY(-2px)}
+.tab-nav{
+  top:auto;
+  bottom:calc(12px + env(safe-area-inset-bottom));
+  left:50%;
+  right:auto;
+  transform:translateX(-50%);
+  position:fixed;
+  z-index:90;
+  margin:0;
+  width:min(calc(100% - 24px),416px);
+  border-radius:18px;
+  padding:5px;
+  background:rgba(28,23,53,.76);
+}
+.tab-btn{min-height:50px;font-size:11px}
+.tab-btn.active{
+  background:linear-gradient(145deg,rgba(169,150,255,.28),rgba(169,150,255,.08));
+}
+main{padding:0 16px 112px}
+.status-row{gap:8px;margin:16px 0 8px}
+.chip{
+  min-height:38px;
+  padding:9px 12px;
+  border:1px solid var(--border-soft);
+  border-radius:13px;
+  font-size:11px;
+  background:rgba(29,25,51,.7);
+}
+.sos-hero{
+  margin:8px -4px 18px;
+  padding:24px 12px 20px;
+  border:1px solid rgba(255,83,109,.14);
+  border-radius:28px;
+  background:linear-gradient(180deg,rgba(255,83,109,.07),rgba(169,150,255,.04) 55%,transparent);
+}
+.sos-tagline{
+  margin-bottom:12px;
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
+  font-size:28px;
+  letter-spacing:-.045em;
+}
+.sos-button,.sos-button:hover{
+  width:204px;
+  height:204px;
+  border:7px solid rgba(255,255,255,.12);
+  background:radial-gradient(circle at 35% 18%,#ffb7bf 0,#ff7788 24%,#ff536d 57%,#c72d4e 100%);
+  box-shadow:0 0 0 10px rgba(255,83,109,.12),0 0 0 22px rgba(255,83,109,.045),0 28px 70px -12px rgba(255,83,109,.7),inset 0 4px 12px rgba(255,255,255,.42),inset 0 -18px 30px rgba(120,10,30,.42);
+}
+.sos-inner{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:62px;letter-spacing:-.06em}
+.sos-hint{color:var(--text-muted);font-size:12px;margin-top:16px}
+.quick-actions{gap:10px;margin-bottom:18px}
+.qa{
+  min-height:92px;
+  border:1px solid var(--border-soft);
+  border-radius:18px;
+  background:linear-gradient(150deg,rgba(35,29,64,.82),rgba(22,18,42,.68));
+  box-shadow:0 12px 26px -22px #000;
+}
+.qa:hover{transform:translateY(-3px);background:rgba(44,36,78,.88)}
+.qa span{font-size:11px;font-weight:700;color:var(--text-soft)}
+.card{
+  padding:20px;
+  margin:14px 0;
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(27,23,51,.94),rgba(19,16,38,.9)) padding-box,
+    linear-gradient(145deg,rgba(169,150,255,.34),rgba(255,255,255,.05) 48%,rgba(54,217,173,.12)) border-box;
+  box-shadow:0 20px 38px -28px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.card-header{margin-bottom:14px}
+.card-header h3{
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
+  font-size:17px;
+  letter-spacing:-.025em;
+}
+.card-icon{
+  width:38px;
+  height:38px;
+  border-radius:13px;
+}
+.muted-text{line-height:1.6;color:#9d98b8}
+.input-field{
+  min-height:48px;
+  border-color:rgba(211,202,255,.14);
+  border-radius:14px;
+  background:rgba(8,7,18,.34);
+}
+.input-field:focus{
+  border-color:rgba(169,150,255,.72);
+  box-shadow:0 0 0 4px rgba(169,150,255,.12);
+}
+.btn-primary,.btn-secondary,.btn-danger,.btn-whatsapp{
+  min-height:48px;
+  border-radius:14px;
+  font-weight:750;
+}
+.btn-primary{background:linear-gradient(150deg,#b8adff,#8976ee);color:#17112f}
+.btn-primary:hover{box-shadow:0 14px 24px -14px #a996ff;transform:translateY(-1px)}
+.btn-secondary{border-color:rgba(211,202,255,.16);background:rgba(255,255,255,.06)}
+button{font-family:'Figtree',system-ui,sans-serif}
+
+/* Onboarding: a confident welcome, not a form dump. */
+.ob-card{
+  border:1px solid rgba(211,202,255,.14);
+  border-radius:28px;
+  background:
+    radial-gradient(100% 36% at 50% 0,rgba(169,150,255,.25),transparent 74%),
+    linear-gradient(155deg,rgba(30,24,60,.96),rgba(13,11,28,.98));
+  box-shadow:0 28px 80px -24px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.ob-title{
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
+  font-size:34px;
+  letter-spacing:-.055em;
+}
+.ob-sub{color:#aaa4c4;line-height:1.55}
+.ob-input,.ob-card input{border-radius:14px;background:rgba(8,7,18,.42);border-color:rgba(211,202,255,.14)}
+.ob-primary,.ob-card button:first-of-type{border-radius:14px;background:linear-gradient(150deg,#b8adff,#8976ee);color:#17112f}
+.ob-secondary,.ob-card button:last-of-type{border-radius:14px}
+
+@media (max-width:500px){
+  .app-wrapper{max-width:none}
+  main{padding-inline:14px}
+  .sos-hero{margin-inline:-2px}
+}
+@media (prefers-reduced-motion:reduce){
+  .bg-blob,.sos-hero::before,.sos-pulse-ring,.sos-pulse-ring::after,.answer-ring{animation:none!important}
+}
