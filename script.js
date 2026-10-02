@@ -63,7 +63,6 @@ let translator = {
     voskLoadedLang: null,         // track which language's model is loaded
     aiTranslator: null,           // window.Translator instance if available
     aiTranslatorPair: null,       // e.g. "hi->en"
-    aiTranslatorReady: false,
   },
 };
 
@@ -1770,104 +1769,19 @@ async function detectOfflineEngines() {
       const avail = await self.Translator.availability({ sourceLanguage: srcShort, targetLanguage: tgtShort });
       if (avail === 'available' || avail === 'downloadable' || avail === 'downloading') {
         setEngineChip('engine-chip-ai', 'on');
-        updateOfflineTranslationStatus(avail === 'available'
-          ? 'Translation model ready.'
-          : 'Translation model can be downloaded.');
       } else {
         setEngineChip('engine-chip-ai', 'off');
-        updateOfflineTranslationStatus('This browser does not provide this language pair offline.');
       }
     } else {
       setEngineChip('engine-chip-ai', 'off');
-      updateOfflineTranslationStatus('Use Chrome 138+ for downloadable offline translation.');
     }
   } catch (e) {
     console.warn('Translator API check failed:', e);
     setEngineChip('engine-chip-ai', 'off');
-    updateOfflineTranslationStatus('Offline translation model is unavailable for this pair.');
   }
 
   // Vosk: check if already loaded
   setEngineChip('engine-chip-voice', translator.offline.voskReady ? 'on' : 'off');
-}
-
-function updateOfflineTranslationStatus(message) {
-  const status = document.getElementById('translation-model-status');
-  if (status) status.textContent = message;
-}
-
-function getOfflineTranslationButton() {
-  return document.getElementById('translation-download-btn');
-}
-
-async function createOfflineTranslator(srcShort, tgtShort, onProgress) {
-  if (!('Translator' in self) || typeof self.Translator.create !== 'function') {
-    throw new Error('This browser does not support on-device translation.');
-  }
-
-  const avail = await self.Translator.availability({
-    sourceLanguage: srcShort,
-    targetLanguage: tgtShort,
-  });
-  if (avail === 'unavailable') {
-    throw new Error(`Offline translation is unavailable for ${srcShort}→${tgtShort}.`);
-  }
-
-  const pairKey = `${srcShort}->${tgtShort}`;
-  const existing = translator.offline.aiTranslator;
-  if (existing && translator.offline.aiTranslatorPair === pairKey) {
-    translator.offline.aiTranslatorReady = true;
-    return existing;
-  }
-
-  const instance = await self.Translator.create({
-    sourceLanguage: srcShort,
-    targetLanguage: tgtShort,
-    monitor(monitor) {
-      monitor.addEventListener('downloadprogress', (event) => {
-        const pct = Math.round((event.loaded || 0) * 100);
-        onProgress?.(`Downloading translation model… ${pct}%`);
-      });
-    },
-  });
-  translator.offline.aiTranslator = instance;
-  translator.offline.aiTranslatorPair = pairKey;
-  translator.offline.aiTranslatorReady = true;
-  return instance;
-}
-
-async function downloadOfflineTranslationModel() {
-  const srcShort = getSourceShort();
-  const tgtShort = getTargetShort();
-  const button = getOfflineTranslationButton();
-
-  if (srcShort === tgtShort) {
-    updateOfflineTranslationStatus('The selected languages are the same; no model is needed.');
-    return;
-  }
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = 'Preparing model…';
-  }
-  updateOfflineTranslationStatus('Checking browser support…');
-
-  try {
-    await createOfflineTranslator(srcShort, tgtShort, updateOfflineTranslationStatus);
-    setEngineChip('engine-chip-ai', 'on');
-    updateOfflineTranslationStatus(`Ready for ${srcShort}→${tgtShort}. It can now work offline.`);
-    showStatus('Offline translation model ready.', 'success', 4000);
-  } catch (error) {
-    console.error('[Translator] offline model download failed:', error);
-    setEngineChip('engine-chip-ai', 'off');
-    updateOfflineTranslationStatus(error.message || 'Could not download the offline translation model.');
-    showStatus(error.message || 'Could not download the offline translation model.', '', 6000);
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = 'Download translation model';
-    }
-  }
 }
 
 
@@ -1919,11 +1833,27 @@ async function runOfflineTranslation() {
 
   // Tier 2: Chrome built-in Translator API
   try {
-  if ('Translator' in self) {
-    const inst = await createOfflineTranslator(srcShort, tgtShort, (message) => {
-      window.setState?.(transEl, 'loading', message);
-    });
-      const translated = await inst.translate(input);
+    if ('Translator' in self) {
+      const pairKey = `${srcShort}->${tgtShort}`;
+      if (!translator.offline.aiTranslator || translator.offline.aiTranslatorPair !== pairKey) {
+        // (re)build for this language pair
+        const avail = await self.Translator.availability({ sourceLanguage: srcShort, targetLanguage: tgtShort });
+        if (avail === 'unavailable') throw new Error('pair-unavailable');
+
+        const inst = await self.Translator.create({
+          sourceLanguage: srcShort,
+          targetLanguage: tgtShort,
+          monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+              const pct = Math.round((e.loaded || 0) * 100);
+              window.setState?.(transEl, 'loading', `Downloading language pack… ${pct}%`);
+            });
+          },
+        });
+        translator.offline.aiTranslator = inst;
+        translator.offline.aiTranslatorPair = pairKey;
+      }
+      const translated = await translator.offline.aiTranslator.translate(input);
       transEl.innerHTML = `<span>${escapeHtml(translated)}</span>`;
       engineBadge.textContent = '· Chrome AI (offline)';
       showOfflineSOSPopup();
