@@ -1800,15 +1800,27 @@ function getOfflineTranslationButton() {
   return document.getElementById('translation-download-btn');
 }
 
+function withTimeout(promise, timeoutMs, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function createOfflineTranslator(srcShort, tgtShort, onProgress) {
   if (!('Translator' in self) || typeof self.Translator.create !== 'function') {
     throw new Error('This browser does not support on-device translation.');
   }
 
-  const avail = await self.Translator.availability({
-    sourceLanguage: srcShort,
-    targetLanguage: tgtShort,
-  });
+  const avail = await withTimeout(
+    self.Translator.availability({
+      sourceLanguage: srcShort,
+      targetLanguage: tgtShort,
+    }),
+    15000,
+    'The browser did not respond while checking offline translation support.'
+  );
   if (avail === 'unavailable') {
     throw new Error(`Offline translation is unavailable for ${srcShort}→${tgtShort}.`);
   }
@@ -1820,16 +1832,20 @@ async function createOfflineTranslator(srcShort, tgtShort, onProgress) {
     return existing;
   }
 
-  const instance = await self.Translator.create({
-    sourceLanguage: srcShort,
-    targetLanguage: tgtShort,
-    monitor(monitor) {
-      monitor.addEventListener('downloadprogress', (event) => {
-        const pct = Math.round((event.loaded || 0) * 100);
-        onProgress?.(`Downloading translation model… ${pct}%`);
-      });
-    },
-  });
+  const instance = await withTimeout(
+    self.Translator.create({
+      sourceLanguage: srcShort,
+      targetLanguage: tgtShort,
+      monitor(monitor) {
+        monitor.addEventListener('downloadprogress', (event) => {
+          const pct = Math.round((event.loaded || 0) * 100);
+          onProgress?.(`Downloading translation model… ${pct}%`);
+        });
+      },
+    }),
+    120000,
+    'The browser did not finish downloading the offline translation model.'
+  );
   translator.offline.aiTranslator = instance;
   translator.offline.aiTranslatorPair = pairKey;
   translator.offline.aiTranslatorReady = true;
