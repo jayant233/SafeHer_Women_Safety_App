@@ -27,15 +27,14 @@
     b.lastElementChild.textContent = loc ? 'Location ready' : 'Check my location';
   }
 
-  /* SOS with a five-second cancel window (accidental taps no longer call/alert instantly) */
+  /* SOS with a three-second cancel window (accidental taps no longer call/alert instantly) */
   let timer = null, left = 0, practiceMode = false;
   const hideCountdown = () => { clearInterval(timer); timer = null; $('sos-countdown').classList.add('hidden'); };
   window.requestSOS = function (practice) {
     if (timer) return;
     practiceMode = practice === true;
-    if (!practiceMode && LS.get('safeher_sos_delay', '3') === '0') { try { getAudioContext(); } catch (e) {} triggerSOS(); openSOSActive(); return; }
     try { getAudioContext(); } catch (e) {}          // unlock audio while we still have the user's tap
-    left = 5; $('sos-count').textContent = left;
+    left = 3; $('sos-count').textContent = left;
     $('sos-cd-title').textContent = practiceMode ? 'Practice run. SOS in' : 'Sending SOS in';
     $('sos-countdown').classList.remove('hidden'); $('sos-cancel-btn').focus(); buzz(60);
     timer = setInterval(() => {
@@ -221,7 +220,7 @@
         <div class="sheet-head"><h2>Settings</h2><button class="contact-action-btn" onclick="closeSettings()" aria-label="Close settings">${I('<path d="M6 6l12 12M18 6 6 18"/>')}</button></div>
         <h3 class="sheet-h">Appearance</h3>${SEG('safeher_theme', LS.get('safeher_theme', 'dark'), [['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']])}
         <h3 class="sheet-h">Language</h3>${SEG('safeher_lang', LS.get('safeher_lang', 'en'), [['en', 'English'], ['hi', 'हिन्दी']])}
-        <h3 class="sheet-h">Countdown before SOS</h3>${SEG('safeher_sos_delay', LS.get('safeher_sos_delay', '3'), [['3', '3 sec'], ['5', '5 sec'], ['0', 'Off']])}
+        <h3 class="sheet-h">Countdown before SOS</h3><p class="muted-text small">SOS always starts after a 3-second countdown.</p>
         <div class="sheet-row"><span>Vibration</span><label class="toggle-switch"><input type="checkbox" ${LS.get('safeher_vibrate', '1') !== '0' ? 'checked' : ''} onchange="setPref('safeher_vibrate',this.checked?'1':'0')"><span class="toggle-slider"></span></label></div>
         <button class="btn-secondary" onclick="closeSettings();requestSOS(true)">Practice SOS</button>
         <button class="btn-secondary" onclick="closeSettings();openOnboarding()">Run setup again</button>

@@ -92,46 +92,47 @@ function playBeep(freq=440, dur=0.3, vol=0.6, type='sine', delay=0) {
 }
 
 let sosAlarmPlaying = false;
+const SOS_ALARM_DURATION_MS = 5000;
+let sosAlarmInterval = null;
+let sosAlarmOscillators = [];
 function playSOSAlarm() {
   if (sosAlarmPlaying) return;
   sosAlarmPlaying = true;
-  setTimeout(() => { sosAlarmPlaying = false; }, 2200);
   try {
     const ctx = getAudioContext();
-    const sirenNotes = [
-      {f:600,t:0.00},{f:1400,t:0.18},{f:600,t:0.36},{f:1400,t:0.54},
-      {f:600,t:0.72},{f:1400,t:0.90},{f:600,t:1.08},{f:1400,t:1.26},
-      {f:600,t:1.44},{f:1400,t:1.62},{f:600,t:1.80},{f:1400,t:1.98},
-    ];
-    sirenNotes.forEach(({f, t}) => {
-      const osc = ctx.createOscillator(); const g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination);
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(f, ctx.currentTime + t);
-      osc.frequency.linearRampToValueAtTime(f === 600 ? 1400 : 600, ctx.currentTime + t + 0.18);
-      g.gain.setValueAtTime(0.7, ctx.currentTime + t);
-      g.gain.linearRampToValueAtTime(0, ctx.currentTime + t + 0.18);
-      osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.20);
-    });
-    for (let i = 0; i < 12; i++) {
-      const osc = ctx.createOscillator(); const g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination);
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(180, ctx.currentTime + i * 0.17);
-      g.gain.setValueAtTime(0.45, ctx.currentTime + i * 0.17);
-      g.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.17 + 0.12);
-      osc.start(ctx.currentTime + i * 0.17); osc.stop(ctx.currentTime + i * 0.17 + 0.14);
-    }
-    for (let i = 0; i < 4; i++) {
-      const osc = ctx.createOscillator(); const g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination);
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(2800, ctx.currentTime + i * 0.5);
-      g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.5);
-      g.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.5 + 0.08);
-      osc.start(ctx.currentTime + i * 0.5); osc.stop(ctx.currentTime + i * 0.5 + 0.10);
-    }
-  } catch(e) { console.warn('SOS alarm err:', e); }
+    const endAt = ctx.currentTime + SOS_ALARM_DURATION_MS / 1000;
+    const siren = ctx.createOscillator();
+    const sirenGain = ctx.createGain();
+    siren.type = 'sawtooth';
+    siren.frequency.setValueAtTime(600, ctx.currentTime);
+    sirenGain.gain.setValueAtTime(0.7, ctx.currentTime);
+    sirenGain.gain.setValueAtTime(0.7, endAt - 0.12);
+    sirenGain.gain.linearRampToValueAtTime(0.001, endAt);
+    siren.connect(sirenGain);
+    sirenGain.connect(ctx.destination);
+    siren.start(ctx.currentTime);
+    siren.stop(endAt);
+    sosAlarmOscillators = [siren];
+
+    let high = false;
+    sosAlarmInterval = setInterval(() => {
+      high = !high;
+      siren.frequency.setTargetAtTime(high ? 1400 : 600, ctx.currentTime, 0.04);
+    }, 180);
+
+    setTimeout(() => {
+      clearInterval(sosAlarmInterval);
+      sosAlarmInterval = null;
+      sosAlarmOscillators = [];
+      sosAlarmPlaying = false;
+    }, SOS_ALARM_DURATION_MS);
+  } catch(e) {
+    clearInterval(sosAlarmInterval);
+    sosAlarmInterval = null;
+    sosAlarmOscillators = [];
+    sosAlarmPlaying = false;
+    console.warn('SOS alarm err:', e);
+  }
 }
 
 function playSuccessSound()   { playBeep(523,0.15,0.4,'sine',0); playBeep(659,0.15,0.4,'sine',0.15); playBeep(784,0.25,0.4,'sine',0.30); }
@@ -852,8 +853,12 @@ async function capturePhotoSequence() {
   const photos = [];
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('camera-unavailable');
-    for (let i = 0; i < 6; i++) {
-      const facingMode = i % 2 === 0 ? 'user' : 'environment';
+    const cameraSequence = [
+      'environment', 'environment', 'environment',
+      'user', 'user', 'user',
+    ];
+    for (let i = 0; i < cameraSequence.length; i++) {
+      const facingMode = cameraSequence[i];
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode, width: 640, height: 480 }
       });

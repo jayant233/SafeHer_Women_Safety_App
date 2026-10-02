@@ -42,7 +42,7 @@
 - JS toggles visibility with the `.hidden` class (`display:none !important`) — keep it.
 - No frameworks or build step; stays plain HTML/CSS/JS so it opens by double-click.
 
-- `ui.js` loads after `script.js` and OVERRIDES `renderContacts`, `addContact`, `deleteContact`, `displayLocationOnScreen`, `updateTimerDisplay`, `endFakeCall`, `renderIncidents`, `showStatus` (strips emoji from every popup), `setTranslatorState`, `setListenButton`. Change those there, not in `script.js`. Settings keys in localStorage: `safeher_theme` (auto/dark/light), `safeher_sos_delay` (3/5/0), `safeher_vibrate`, `safeher_onboarded`. `requestSOS(true)` = practice mode (sends nothing). The Home SOS button calls `requestSOS()` (3-sec cancel window), which then calls `triggerSOS()`.
+- `ui.js` loads after `script.js` and OVERRIDES `renderContacts`, `addContact`, `deleteContact`, `displayLocationOnScreen`, `updateTimerDisplay`, `endFakeCall`, `renderIncidents`, `showStatus` (strips emoji from every popup), `setTranslatorState`, `setListenButton`. Change those there, not in `script.js`. Settings keys in localStorage: `safeher_theme` (auto/dark/light), `safeher_vibrate`, `safeher_onboarded`. Both `requestSOS(true)` (practice mode) and the Home SOS button use the fixed 3-second cancel window before `triggerSOS()`. The SOS ringtone loops for 5 seconds.
 
 - `window.i18n(key)` returns the Hindi text when the interface language is Hindi, else the key; use it for `confirm()` and for HTML built in JS outside the page (the report window). `window.setState(el, kind, text, retryFn)` is the one way to show loading/error text inside a card. The status toast must stay `position:fixed`, so it never moves the SOS button.
 
